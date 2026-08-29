@@ -1,0 +1,34 @@
+name: Update Free Nodes
+
+on:
+  schedule:
+    - cron: '0 0 * * *'   # 每天 UTC 00:00 更新（北京时间 08:00）
+  workflow_dispatch:      # 允许手动触发
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests pyyaml
+
+      - name: Fetch and merge free nodes
+        run: python update_nodes.py
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add clash.yaml README.md
+          git diff --staged --quiet || git commit -m "Update free nodes $(date -u +%Y-%m-%d)"
+          git push
